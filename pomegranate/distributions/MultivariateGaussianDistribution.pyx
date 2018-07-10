@@ -261,17 +261,9 @@ cdef class MultivariateGaussianDistribution(MultivariateDistribution):
 				cov = (x_jk - x_j*x_k/w_jk) / w_jk if w_jk > 0.0 else 0
 				self._cov[j*d + k] = self._cov[j*d + k] * inertia + cov * (1-inertia)
 
-		try:
-			chol = scipy.linalg.cholesky(self.cov, lower=True)
-			self.inv_cov = scipy.linalg.solve_triangular(chol, numpy.eye(d),
-				lower=True).T
-		except:
-			min_eig = numpy.linalg.eig(self.cov)[0].min()
-			self.cov -= numpy.eye(d) * min_eig
-
-			chol = scipy.linalg.cholesky(self.cov, lower=True)
-			self.inv_cov = scipy.linalg.solve_triangular(chol, numpy.eye(d),
-				lower=True).T
+		self.cov += min_covar * numpy.eye(d)
+		chol = scipy.linalg.cholesky(self.cov, lower=True)
+		self.inv_cov = scipy.linalg.solve_triangular(chol, numpy.eye(d), lower=True).T
 
 		_, self._log_det = numpy.linalg.slogdet(self.cov)
 		self._inv_cov = <double*> self.inv_cov.data
